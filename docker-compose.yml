@@ -1,0 +1,29 @@
+version: '3'
+services:
+  nginx:
+    image: nginx:latest
+    ports:
+      - "83:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf
+      - ./src:/var/www/html
+    depends_on:
+      - php
+  mysql:
+    image: mysql:latest
+    restart: always
+    environment:
+      MYSQL_DATABASE: ${DB_DATABASE}
+      MYSQL_USER: ${DB_USERNAME}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: q123efca98b
+    volumes:
+      - ./mysql:/var/lib/mysql
+  php:
+    build:
+      context: .
+      dockerfile: ./docker/php/Dockerfile
+    volumes:
+      - ./src:/var/www/html
+    depends_on:
+      - mysql
