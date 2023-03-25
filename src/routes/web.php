@@ -3,6 +3,7 @@
 use App\Http\Controllers\LoginController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ProviderController;
+use App\Http\Controllers\UserController;
 
 /*
 |--------------------------------------------------------------------------
@@ -16,25 +17,35 @@ use App\Http\Controllers\ProviderController;
 */
 
 Route::get('/', function () {
-    return view('pages.login');
+    // redirect to dashboard if authorized
+    // redirect to login if not authorized
+    return auth()->user() ? $
 });
 
-Route::get('/login', function () {
+Route::get('login', function () {
     return view('pages.login');
 })->name('login');
 
-Route::post('auth', [LoginController::class, 'login'])->name('login.auth');
+Route::post('login', [LoginController::class, 'login'])->name('login.login');
+Route::post('logout', [LoginController::class, 'logout'])->name('login.logout');
 
+Route::get('user/register', [UserController::class, 'register'])->name('user.register');
+Route::post('user/register', [UserController::class, 'create'])->name('user.create');
 
-// all routes below should be under auth middleware
 Route::middleware(['auth'])->group(function () {
+    Route::get('user/edit', [UserController::class, 'edit'])->name('user.edit');;
+    Route::put('user/update', [UserController::class, 'update'])->name('user.update');
+    Route::get('user/providers', [UserController::class, 'providers'])->name('user.providers');
+
+    Route::get('user/{provider}/authorize', [ProviderController::class, 'authorize'])->name('provider.auth');
+
     Route::get('dashboard', function () {
         return view('pages.dashboard');
-    });
+    })->name('dashboard');
 
-    Route::get('dashboard/{provider}', function () {
-        return 'provider page that loads my tracks';
-    });
+    Route::get('dashboard/{provider}', function (string $provider) {
+        return sprintf('provider page that loads my tracks - %s', $provider);
+    })->name('dashboard.provider');
 
     // these are request to get data for specific tab for each provider
     Route::get('dashboard/{provider}/mytracks', function () {
@@ -44,9 +55,4 @@ Route::middleware(['auth'])->group(function () {
         return 'playlists';
     });
 
-    Route::get('user/settings', function () {
-        return 'here will be page to connect providers and change user info';
-    });
-
-    Route::get('user/{provider}/authorize', [ProviderController::class, 'authorize']);
 });

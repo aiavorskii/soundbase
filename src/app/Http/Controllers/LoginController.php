@@ -28,4 +28,14 @@ class LoginController extends BaseController
             'email' => 'The provided credentials do not match our records.',
         ])->onlyInput('email');
     }
+
+    public function logout()
+    {
+
+    }
+
+    public function register()
+    {
+
+    }
 }
