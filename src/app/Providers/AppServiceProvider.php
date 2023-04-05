@@ -2,10 +2,13 @@
 
 namespace App\Providers;
 
-use App\Http\Service\SpotifyAuthenticationService;
+use App\Http\Controllers\ProviderController;
+use App\Services\SpotifyAuthenticationService;
 use App\ProviderAuthenticatorManager;
 use Illuminate\Support\ServiceProvider;
 use SpotifyWebAPI\Session as SpotifySession;
+use App\Http\Repository\SporifyTokenRepository;
+use App\Http\Repository\TokenRepositoryInterface;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -22,18 +25,28 @@ class AppServiceProvider extends ServiceProvider
             );
         });
 
+        // TODO this is temp need to do this automatically based on provider
+        $this->app->singleton(TokenRepositoryInterface::class, SporifyTokenRepository::class);
+        // $this->app->when(ProviderController::class)
+        //     ->needs(TokenRepositoryInterface::class)
+        //     ->give(function(){
+        //         return $this->app->make(SporifyTokenRepository::class);
+        //     });
 
         $this->app->singleton(ProviderAuthenticatorManager::class, function() {
             $providerManager = new ProviderAuthenticatorManager();
 
             $providerManager->addProviderAuthenticator(
                 new SpotifyAuthenticationService(
-                    $this->app->make(SpotifySession::class)
+                    $this->app->make(SporifyTokenRepository::class),
+                    $this->app->make(SpotifySession::class),
                 )
             );
-            
+
             // add other providers here
+            return $providerManager;
         });
+
     }
 
     /**

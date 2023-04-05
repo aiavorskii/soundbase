@@ -12,6 +12,16 @@ class SpotifyToken extends Model
 {
     use HasFactory;
 
+    public $timestamps = false;
+
+    protected $fillable = [
+        'code',
+        'user_id',
+        'access_token',
+        'refresh_token',
+        'expiration',
+    ];
+
     protected $table = 'spotify_tokens';
 
     public function user(): BelongsTo

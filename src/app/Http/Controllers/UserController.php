@@ -8,6 +8,7 @@ use Illuminate\Routing\Controller as BaseController;
 use Illuminate\Http\Request;
 use App\Http\Repository\UserRepository;
 use App\Models\User;
+use App\ValueObject\Provider;
 
 class UserController extends BaseController
 {
@@ -56,9 +57,12 @@ class UserController extends BaseController
             $providers[] = [
                 'name' => $provider,
                 'dashboard' => route('dashboard.provider', ['provider' => $provider]),
-                'authorized' => true, // (bool)$this->userRepository->getProviderAuth($user, $provider),
-                'tracks_count' => $this->userRepository->countUserTracks($user, $provider),
-                'action' => route('provider.auth', [
+                'authorized' => (bool)$this->userRepository->getProviderAuth($user, $provider),
+                'tracks_count' => $this->userRepository->countUserTracks($user, new Provider($provider)),
+                'auth_action' => route('provider.auth', [
+                    'provider' => $provider
+                ]),
+                'data_action' => route('provider.data', [
                     'provider' => $provider
                 ]),
             ];

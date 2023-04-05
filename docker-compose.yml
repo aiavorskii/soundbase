@@ -9,6 +9,9 @@ services:
       - ./src:/var/www/html
     depends_on:
       - php
+    networks:
+        - soundbase
+
   mysql:
     image: mysql:latest
     restart: always
@@ -19,11 +22,26 @@ services:
       MYSQL_ROOT_PASSWORD: q123efca98b
     volumes:
       - ./mysql:/var/lib/mysql
+    networks:
+        - soundbase
+
   php:
     build:
       context: .
       dockerfile: ./docker/php/Dockerfile
     volumes:
       - ./src:/var/www/html
+      - ./docker/php/xdebug.ini:/usr/local/etc/php/conf.d/xdebug.ini:cached
     depends_on:
       - mysql
+    networks:
+        - soundbase
+
+networks:
+  elastic:
+  soundbase:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 10.11.0.0/16
+          gateway: 10.11.0.1

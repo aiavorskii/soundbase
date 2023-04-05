@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App;
 
-use App\Http\Service\ProviderAuthenticatorInterface;
+use App\Services\ProviderAuthenticatorInterface;
 
 /**
  * @property ProviderAuthenticatorInterface[] $providerAuthenticators

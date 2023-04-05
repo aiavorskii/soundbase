@@ -12,11 +12,14 @@
                                     <div class="card-body">
                                         <h4 class="card-title">{{ $provider['name'] }}</h4>
                                         <p class="card-text">Songs count: {{ $provider['tracks_count'] }}</p>
+                                        <br/>
+                                        <a class="btn btn-primary"
+                                            href="{{ $provider['data_action'] }}">Get data</a>
                                     </div>
                                 </div>
                             </a>
                         @else
-                            <a class="btn btn-primary" href="{{ $provider['action'] }}">Authorize {{ $provider['name'] }}</a>
+                            <a class="btn btn-primary" href="{{ $provider['auth_action'] }}">Authorize {{ $provider['name'] }}</a>
                         @endif
                     </div>
                 @endforeach

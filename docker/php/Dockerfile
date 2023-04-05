@@ -1,5 +1,6 @@
 from php:8.1-fpm-alpine
 
+
 ARG UID=1000
 ARG GID=1000
 ENV UID=${UID}
@@ -7,7 +8,7 @@ ENV GID=${GID}
 
 # Install required packages
 RUN apk update && apk upgrade \
-    && apk add --no-cache linux-headers alpine-sdk curl zip unzip icu-dev libxml2-dev libzip-dev git shadow \
+    && apk add --no-cache linux-headers alpine-sdk curl zip unzip bash icu-dev libxml2-dev libzip-dev git shadow \
     && apk add --no-cache --virtual .build-deps autoconf g++ make \
     && usermod -u $UID www-data && groupmod -g $GID www-data \
     && pecl install xdebug \

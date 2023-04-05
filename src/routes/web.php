@@ -4,6 +4,8 @@ use App\Http\Controllers\LoginController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ProviderController;
 use App\Http\Controllers\UserController;
+use App\ValueObject\Provider;
+use App\Http\Controllers\DashboardController;
 
 /*
 |--------------------------------------------------------------------------
@@ -17,9 +19,7 @@ use App\Http\Controllers\UserController;
 */
 
 Route::get('/', function () {
-    // redirect to dashboard if authorized
-    // redirect to login if not authorized
-    return auth()->user() ? $
+    return auth()->user() ? redirect('dashboard') : redirect('login');
 });
 
 Route::get('login', function () {
@@ -38,12 +38,14 @@ Route::middleware(['auth'])->group(function () {
     Route::get('user/providers', [UserController::class, 'providers'])->name('user.providers');
 
     Route::get('user/{provider}/authorize', [ProviderController::class, 'authorize'])->name('provider.auth');
+    Route::get('user/{provider}/callback', [ProviderController::class, 'authorizeCallback'])->name('provider.callback');
+    Route::get('user/{provider}/get-data', [ProviderController::class, 'getData'])->name('provider.data');
 
     Route::get('dashboard', function () {
         return view('pages.dashboard');
     })->name('dashboard');
 
-    Route::get('dashboard/{provider}', function (string $provider) {
+    Route::get('dashboard/{provider}', function (Provider $provider) {
         return sprintf('provider page that loads my tracks - %s', $provider);
     })->name('dashboard.provider');
 
@@ -56,3 +58,5 @@ Route::middleware(['auth'])->group(function () {
     });
 
 });
+
+Route::get('test', [DashboardController::class, 'test']);
