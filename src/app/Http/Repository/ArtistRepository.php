@@ -4,19 +4,12 @@ declare(strict_types=1);
 
 namespace App\Http\Repository;
 
-use App\Models\Artist;
+use App\Http\Aggregates\ArtistAggregate;
 
 class ArtistRepository
 {
-    public function getOrCreate(array $data, $external_id = null, $provider = null): ?Artist
+    public function store(ArtistAggregate $artistAggregate): ArtistAggregate
     {
-        $internalId = 1; // query to get internal id from albums_provider
-
-        if ($internalId) {
-            return Artist::find($internalId);
-        }
-
-        return Artist::create($data);
+        return $artistAggregate;
     }
 }
-

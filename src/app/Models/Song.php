@@ -8,6 +8,7 @@ use App\Models\Artist;
 use App\Models\Album;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use App\Models\User;
 
 class Song extends Model
 {
@@ -33,5 +34,10 @@ class Song extends Model
     public function album(): BelongsTo
     {
         return $this->belongsTo(Album::class);
+    }
+
+    public function user(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class, 'songs_user');
     }
 }

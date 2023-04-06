@@ -4,6 +4,11 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Http\Aggregates\AlbumAggregate;
+use App\Http\Aggregates\SongAggregate;
+use App\Http\Repository\AlbumRepository;
+use App\Http\Repository\ArtistRepository;
+use App\Http\Repository\SongRepository;
 use App\Http\Requests\ProviderAuthCallbackRequest;
 use App\Models\User;
 use App\ProviderAuthenticatorManager;
@@ -12,18 +17,32 @@ use Illuminate\Routing\Controller as BaseController;
 use SpotifyWebAPI\SpotifyWebAPI;
 use App\Http\Repository\TokenRepositoryInterface;
 use App\Http\Responses\SavedTracksResponse;
-use App\Models\Artist;
-use App\Models\Provider;
-use Exception;
-use App\Models\Album;
 use App\Models\Song;
+use App\Http\Factory\AlbumAggregateFactory;
+use App\Http\Factory\ArtistAggregateFactory;
+use App\Models\Provider;
+use Database\Factories\ProviderFactory;
+use Database\Factories\AlbumFactory;
+use Database\Factories\ArtistFactory;
+use Database\Factories\SongFactory;
+use stdClass;
+use App\Models\Album;
 
 class ProviderController extends BaseController
 {
     public function __construct(
         private ProviderAuthenticatorManager $providerAuthenticatorManager,
         private SpotifyWebAPI $spotifyWebAPI,
-        private TokenRepositoryInterface $tokenRepository
+        private TokenRepositoryInterface $tokenRepository,
+        private AlbumRepository $albumRepository,
+        private ArtistRepository $artistRepository,
+        private SongRepository $songRepository,
+        private ArtistAggregateFactory $artistAggregateFactory,
+        private AlbumAggregateFactory $albumAggregateFactory,
+        private ProviderFactory $providerFactory,
+        private AlbumFactory $albumFactory,
+        private ArtistFactory $artistFactory,
+        private SongFactory $songFactory,
     ) {
     }
 
@@ -53,6 +72,7 @@ class ProviderController extends BaseController
         $this->spotifyWebAPI->setAccessToken($token->access_token);
 
         // put everything under one class
+        // create reponse wrappers for track, album, artist
         $response = new SavedTracksResponse(
             $this->spotifyWebAPI->getMySavedTracks([
                 'offset' => 0,
@@ -61,79 +81,102 @@ class ProviderController extends BaseController
         );
 
         foreach ($response->getItems() as $item) {
-            // saving albums
-            // TODO advanced condition check with joins before creating
-            $album = Album::firstOrCreate([
-                'name' => $item->track->album->name,
-                'release_date' => $item->track->album->release_date,
-            ]);
-
-            $album->provider()->firstOrCreate([
-                'provider' => $providerName,
-                'external_id' => $item->track->album->id,
-            ]);
-
-            $albumArtists = [];
-            foreach ($item->track->album->artists as $artistData) {
-                try {
-                    // TODO advanced condition check with joins before creating
-                    $artist = Artist::firstOrCreate([
-                        'name' => $artistData->name
-                    ]);
-
-                    $artist->provider()->firstOrCreate([
-                        'provider' => $providerName,
-                        'external_id' => $artistData->id,
-                    ]);
-
-                    $albumArtists[] = $artist->id;
-                } catch (Exception $e) {
-                }
-            }
-
-            $album->artists()->attach($albumArtists);
-            // end of saving albums // TODO put this in albums repo
-
-            // saving artists
-            $artists = [];
-            foreach ($item->track->artists as $artistData) {
-                try {
-                    // TODO advanced condition check with joins before creating
-                    $artist = Artist::firstOrCreate([
-                        'name' => $artistData->name
-                    ]);
-
-                    $artist->provider()->firstOrCreate([
-                        'provider' => $providerName,
-                        'external_id' => $artistData->id,
-                    ]);
-
-                    $artists[] = $artist->id;
-                } catch (Exception $e) {
-                }
-            }
-            // end of saving albums // TODO put this in artists repo
-
-            // saving song
-            // TODO advanced condition check with joins before creating
-            $song = Song::firstOrCreate([
-                'name' => $item->track->name,
-                'duration_ms' => $item->track->duration_ms,
-            ]);
-
-            $song->artists()->attach($artists);
-            $song->album()->associate($album->id);
-            $song->provider()->firstOrCreate([
-                'provider' => $providerName,
-                'external_id' => $item->track->id,
-            ]);
-
-            // attaching artists to a song
-            $data = [];
-            // **save track functionality
-            // saving artists
-            // saving albums
-            // saving song
+            $album = $this->saveAlbumData($item->track->album, $providerName);
+            $artists = $this->saveArtists($item->track->artists, $providerName);
+            $this->saveSong($item->track, $providerName, $album->getRoot(), $user, $artists);
         }
+    }
+
+    /**
+     * TODO move to service?
+     *
+     * @param stdClass $songData // TODO create data wrapper for response
+     * @param string $providerName
+     * @param Album $album
+     * @param User $user
+     * @param array $artists
+     * @return void
+     */
+    public function saveSong(
+        stdClass $songData,
+        string $providerName,
+        Album $album,
+        User $user,
+        array $artists
+    ) {
+        // create with factory
+        $songAggregate = new SongAggregate(
+            $this->songFactory->create([
+                'name' => $songData->track->name,
+                'duration_ms' => $songData->track->duration_ms,
+            ]),
+            $this->providerFactory->create([
+                'provider' => $providerName,
+                'external_id' => $songData->track->id,
+            ]),
+            $album->getRoot(),
+            $user,
+            $artists
+        );
+
+        $this->songRepository->store($songAggregate);
+    }
+
+    /**
+     * TODO move to service?
+     *
+     * @param stdClass $albumData // TODO create data wrapper for response
+     * @param string $providerName
+     *
+     * @return AlbumAggregate
+     */
+    function saveAlbumData(stdClass $albumData, string $providerName): AlbumAggregate
+    {
+        $albumArtists = $this->saveArtists($albumData->artists, $providerName);
+
+        return $this->albumRepository->store(
+            $this->albumAggregateFactory->create(
+                $this->albumFactory->create([
+                    'name' => $albumData->name,
+                    'release_date' => $albumData->release_date,
+                ]),
+                $this->providerFactory->create([
+                    'provider' => $providerName,
+                    'external_id' => $albumData->id,
+                ]),
+                $albumArtists
+            )
+        );
+    }
+
+    /**
+     * TODO move to service?
+     *
+     * @param array $artists // TODO create data wrapper for response
+     * @param string $providerName
+     *
+     * @return int[]
+     */
+    function saveArtists(array $artists, string $providerName): array
+    {
+        $artistIds = [];
+
+        foreach ($artists as $artistData) {
+            $artist = $this->artistRepository->store(
+                $this->artistAggregateFactory->create(
+                    $this->artistFactory->create([
+                        'name' => $artistData->name,
+                    ]),
+                    $this->providerFactory->create([
+                        'provider' => $providerName,
+                        'external_id' => $artistData->id,
+                    ]),
+                )
+            );
+
+            $artistIds[] = $artist->getRoot()->id;
+        }
+
+        return $artistIds;
     }
 }

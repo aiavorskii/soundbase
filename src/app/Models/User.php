@@ -4,9 +4,11 @@ namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
+use App\Models\Playlist;
 
 class User extends Authenticatable
 {
@@ -23,7 +25,7 @@ class User extends Authenticatable
         'password',
     ];
 
-    /**
+    /**albums
      * The attributes that should be hidden for serialization.
      *
      * @var array<int, string>
@@ -46,5 +48,16 @@ class User extends Authenticatable
     public function spotify_token()
     {
         return $this->hasOne(SpotifyToken::class);
+    }
+
+    public function songs(): BelongsToMany
+    {
+        return $this->belongsToMany(Song::class, 'songs_user');
+    }
+
+    public function playlists() // BelongsToMany
+    {
+        return null;
+        // return $this->belongsToMany(Playlist::class, 'playlists_users');
     }
 }
