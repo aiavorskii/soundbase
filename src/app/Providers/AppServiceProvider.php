@@ -9,6 +9,7 @@ use Illuminate\Support\ServiceProvider;
 use SpotifyWebAPI\Session as SpotifySession;
 use App\Http\Repository\SporifyTokenRepository;
 use App\Http\Repository\TokenRepositoryInterface;
+use SpotifyWebAPI\SpotifyWebAPI;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -22,6 +23,17 @@ class AppServiceProvider extends ServiceProvider
                 env('SPOTIFY_CLIENT_ID'),
                 env('SPOTIFY_CLIENT_SECRET'),
                 env('REDIRECT_URI')
+            );
+        });
+
+        $this->app->singleton(SpotifyWebAPI::class, function() {
+            $options = [
+                'auto_refresh' => true,
+            ];
+
+            return new SpotifyWebAPI(
+                $options,
+                $this->app->make(SpotifySession::class),
             );
         });
 

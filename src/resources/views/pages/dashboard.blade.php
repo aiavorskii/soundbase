@@ -41,7 +41,7 @@
                 <div class="tab-content">
                     <div class="tab-pane active" id="liked-tracks" role="tabpanel" aria-labelledby="liked-tracks-tab">
                         <h3>Liked tracks</h3>
-                        @include('parts.tracks-table')
+                        @include('parts.tracks-table', ['tracks' => $likedTracks ?? []])
                     </div>
                     <div class="tab-pane" id="profile" role="tabpanel" aria-labelledby="profile-tab">
                         <h3>My playlists</h3>

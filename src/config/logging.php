@@ -57,6 +57,12 @@ return [
             'ignore_exceptions' => false,
         ],
 
+        'parse' => [
+            'driver' => 'single',
+            'path' => storage_path('logs/parse.log'),
+            'level' => env('LOG_LEVEL', 'debug'),
+        ],
+
         'single' => [
             'driver' => 'single',
             'path' => storage_path('logs/laravel.log'),

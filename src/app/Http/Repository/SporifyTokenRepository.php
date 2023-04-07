@@ -14,6 +14,11 @@ class SporifyTokenRepository implements TokenRepositoryInterface
         return SpotifyToken::firstOrCreate($searchCriteria, $data);
     }
 
+    public function updateToken($searchCriteria, $data): void
+    {
+        SpotifyToken::updateorCreate($searchCriteria, $data);
+    }
+
     public function getUserToken(User $user): ?SpotifyToken
     {
         return $user->spotify_token;

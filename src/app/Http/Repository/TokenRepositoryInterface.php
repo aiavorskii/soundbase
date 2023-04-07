@@ -12,4 +12,6 @@ interface TokenRepositoryInterface
     public function findOrCreate($searchCriteria, $data): SpotifyToken;
 
     public function getUserToken(User $user): ?SpotifyToken;
+
+    public function updateToken($searchCriteria, $data): void;
 }

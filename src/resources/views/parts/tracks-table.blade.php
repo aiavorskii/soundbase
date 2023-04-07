@@ -8,11 +8,27 @@
             </tr>
         </thead>
         <tbody>
-            <tr class="">
-                <td>Kendrick Lamar</td>
-                <td>DAMN</td>
-                <td>6:34</td>
-            </tr>
+            {{-- track var is Song model with its relations --}}
+            @if (empty($tracks))
+                <tr>
+                    <td colspan="3">No tracks yet</td>
+                </tr>
+            @else
+                @foreach ($tracks as $track)
+                {{-- @php
+                dd($track);
+                @endphp --}}
+                    <tr class="">
+                        <td>
+                            @foreach ($track['artists'] as $artist)
+                                <a href="{{ route('artist', ['artist' => $artist['id']]) }}">{{ $artist['name'] }}</a>
+                            @endforeach
+                        </td>
+                        <td>{{ $track['name'] }}</td>
+                        <td>{{ msToMinSec($track['duration_ms']) }}</td>
+                    </tr>
+                @endforeach
+            @endif
         </tbody>
     </table>
 </div>

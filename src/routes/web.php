@@ -6,6 +6,7 @@ use App\Http\Controllers\ProviderController;
 use App\Http\Controllers\UserController;
 use App\ValueObject\Provider;
 use App\Http\Controllers\DashboardController;
+use App\Models\Artist;
 
 /*
 |--------------------------------------------------------------------------
@@ -42,21 +43,27 @@ Route::middleware(['auth'])->group(function () {
     Route::get('user/{provider}/get-data', [ProviderController::class, 'getData'])->name('provider.data');
 
     Route::get('dashboard', function () {
-        return view('pages.dashboard');
+        return redirect(route('dashboard.mytracks', ['provider' => Provider::PROVIDER_SPOTIFY]));
     })->name('dashboard');
 
     Route::get('dashboard/{provider}', function (Provider $provider) {
-        return sprintf('provider page that loads my tracks - %s', $provider);
+        return redirect(route('dashboard.mytracks', ['provider' => Provider::PROVIDER_SPOTIFY]));
     })->name('dashboard.provider');
 
     // these are request to get data for specific tab for each provider
-    Route::get('dashboard/{provider}/mytracks', function () {
-        return 'tracks';
-    });
+    Route::get('dashboard/{provider}/mytracks', [DashboardController::class, 'mytracks'])
+        ->name('dashboard.mytracks')
+        ->where('provider', implode('|', Provider::SUPPORTED_PROVIDERS));
+
     Route::get('dashboard/{provider}/myplaylists', function () {
         return 'playlists';
     });
 
 });
+
+
+Route::get('artist/{artist}', function (Artist $artist) {
+    return sprintf('artist page - %s', $artist->name);
+})->name('artist');
 
 Route::get('test', [DashboardController::class, 'test']);
